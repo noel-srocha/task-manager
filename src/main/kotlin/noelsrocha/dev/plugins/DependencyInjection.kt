@@ -8,7 +8,12 @@ import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 
 fun Application.configureDependencyInjection() {
+    val taskModule = module {
+        single<TaskRepository> { TaskRepositoryImpl() }
+    }
+
     install(Koin) {
         slf4jLogger()
+        modules(taskModule)
     }
 }
