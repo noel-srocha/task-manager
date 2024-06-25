@@ -1,6 +1,6 @@
 package noelsrocha.dev.tasks
 
-import io.ktor.client.*
+import io.kotest.core.spec.style.DescribeSpec
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -13,74 +13,78 @@ import noelsrocha.dev.plugins.configureSerialization
 import noelsrocha.dev.tasks.models.Priority
 import noelsrocha.dev.tasks.models.Task
 import noelsrocha.dev.tasks.routes.configureTaskRouting
-import org.koin.dsl.module
 import kotlin.test.*
 
-class TaskTest {
-    @Test
-    fun tasksCanBeFoundByPriority() = testApplication {
-        application {
-            configureSerialization()
-            configureDependencyInjection()
-            configureRouting()
-            configureTaskRouting()
-        }
+class TaskTest : DescribeSpec({
+    describe("Task Context") {
+        it("can be found by priority") {
+            testApplication {
+                application {
+                    configureSerialization()
+                    configureDependencyInjection()
+                    configureRouting()
+                    configureTaskRouting()
+                }
 
-        val client = createClient {
-            install(ContentNegotiation) {
-                json()
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json()
+                    }
+                }
+
+                val response = client.get("/tasks/byPriority/MEDIUM")
+                val results = response.body<List<Task>>()
+
+                assertEquals(HttpStatusCode.OK, response.status)
+
+                val expectedTaskNames = listOf("Task 2")
+                val actualTaskNames = results.map(Task::name)
+                assertContentEquals(expectedTaskNames, actualTaskNames)
             }
         }
 
-        val response = client.get("/tasks/byPriority/MEDIUM")
-        val results = response.body<List<Task>>()
+        it("can be created") {
+            testApplication {
+                application {
+                    configureSerialization()
+                    configureDependencyInjection()
+                    configureRouting()
+                    configureTaskRouting()
+                }
 
-        assertEquals(HttpStatusCode.OK, response.status)
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json()
+                    }
+                }
 
-        val expectedTaskNames = listOf("Task 2")
-        val actualTaskNames = results.map(Task::name)
-        assertContentEquals(expectedTaskNames, actualTaskNames)
-    }
+                val task = Task(name = "Create a Ktor REST API", description = "Programming Tutorial", priority = Priority.HIGH)
+                val response = client.post("/tasks") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json)
 
-    @Test
-    fun invalidPriorityProduces400() = testApplication {
-        application {
-            configureSerialization()
-            configureDependencyInjection()
-            configureRouting()
-            configureTaskRouting()
-        }
+                    setBody(task)
+                }
+                assertEquals(HttpStatusCode.Created, response.status)
 
-        val response = client.get("/tasks/byPriority/INVALID")
-        assertEquals(HttpStatusCode.BadRequest, response.status)
-    }
+                val tasks = client.get("/tasks")
+                val taskNames = tasks.body<List<Task>>().map(Task::name)
 
-    @Test
-    fun newTasksCanBeCreated() = testApplication {
-        application {
-            configureSerialization()
-            configureDependencyInjection()
-            configureRouting()
-            configureTaskRouting()
-        }
-
-        val client = createClient {
-            install(ContentNegotiation) {
-                json()
+                assertContains(taskNames, "Create a Ktor REST API")
             }
         }
 
-        val task = Task(name = "Create a Ktor REST API", description = "Programming Tutorial", priority = Priority.HIGH)
-        val response = client.post("/tasks") {
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
+        it("invalidates request with wrong priority") {
+            testApplication {
+                application {
+                    configureSerialization()
+                    configureDependencyInjection()
+                    configureRouting()
+                    configureTaskRouting()
+                }
 
-            setBody(task)
+                val response = client.get("/tasks/byPriority/INVALID")
+                assertEquals(HttpStatusCode.BadRequest, response.status)
+            }
         }
-        assertEquals(HttpStatusCode.Created, response.status)
-
-        val tasks = client.get("/tasks")
-        val taskNames = tasks.body<List<Task>>().map(Task::name)
-
-        assertContains(taskNames, "Create a Ktor REST API")
     }
-}
+})

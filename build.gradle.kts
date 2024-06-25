@@ -13,6 +13,7 @@ plugins {
 group = "noelsrocha.dev"
 version = "0.0.1"
 val koin_version = "3.5.6"
+val kotest_version = "5.9.1"
 
 application {
     mainClass.set("noelsrocha.dev.ApplicationKt")
@@ -23,6 +24,10 @@ application {
 
 repositories {
     mavenCentral()
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 dependencies {
@@ -42,4 +47,5 @@ dependencies {
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     testImplementation("io.ktor:ktor-client-content-negotiation")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotest_version")
 }
