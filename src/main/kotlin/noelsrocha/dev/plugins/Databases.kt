@@ -7,6 +7,6 @@ fun Application.configureDatabases() {
     Database.connect(
         "jdbc:postgresql://localhost:5432/ktor_tutorial_db",
         user = "postgres",
-        password = "password"
+        password = System.getenv("DB_PASSWORD")
     )
 }
