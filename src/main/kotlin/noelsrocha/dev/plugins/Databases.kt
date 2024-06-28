@@ -5,8 +5,8 @@ import org.jetbrains.exposed.sql.Database
 
 fun Application.configureDatabases() {
     Database.connect(
-        "jdbc:postgresql://localhost:5432/ktor_tutorial_db",
-        user = "postgres",
+        System.getenv("DB_URL"),
+        user = System.getenv("DB_USERNAME"),
         password = System.getenv("DB_PASSWORD")
     )
 }
